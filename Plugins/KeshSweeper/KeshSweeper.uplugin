@@ -1,0 +1,28 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "Kesh Sweeper",
+	"Description": "A \"simple\" in-editor Mine Sweeper Game",
+	"Category": "Other",
+	"CreatedBy": "Matthew \"Daekesh\" Chapman",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "KeshSweeperRuntime",
+			"Type": "Runtime",
+			"LoadingPhase": "PreDefault"
+		},
+		{
+			"Name": "KeshSweeperEditor",
+			"Type": "Editor"
+		}
+	]
+}
