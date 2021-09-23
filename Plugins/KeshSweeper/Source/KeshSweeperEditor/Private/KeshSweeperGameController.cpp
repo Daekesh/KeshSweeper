@@ -1,3 +1,5 @@
+// Copyright Matthew "Daekesh" Chapman (c) 1983-2021. All rights reserved.
+
 #pragma once
 
 #include "KeshSweeperGameController.h"
@@ -74,12 +76,21 @@ bool FKeshSweeperGameController::StartNewGame( uint8 Width, uint8 Height, float 
 	if ( !Plugin->GetView().IsValid() )
 		return false;
 
-	TArray< bool > Mines = GenerateRandomMinePlacements( Width * Height, GetMineCountForDifficulty( Difficulty ) );
+	TArray< bool > Mines = GenerateRandomMinePlacements( 
+		Width * Height, 
+		GetMineCountForDifficulty( Width * Height, Difficulty )
+	);
 	
 	CellsToReveal.Empty();
 	Plugin->GetModel()->SetupCells( Width, Height, Mines );
 	Plugin->GetView()->PopulateGrid( Width, Height );
 	GameStatus = EGameStatus::InProgress;
+
+	// Automatic win? Woo!
+	if ( Plugin->GetModel()->GetMineCount() == 0 || Plugin->GetModel()->GetMineCount() == Plugin->GetModel()->GetCellCount() )
+	{
+		TriggerGameEnd( EGameStatus::Won );
+	}
 
 	return true;
 }
@@ -377,7 +388,7 @@ void FKeshSweeperGameController::Tick( float DeltaTime )
 	}		
 }
 
-uint16 FKeshSweeperGameController::GetMineCountForDifficulty( float Difficulty ) const
+uint16 FKeshSweeperGameController::GetMineCountForDifficulty( uint16 CellCount, float Difficulty )
 {
 	// Some sanity checks
 	if ( Difficulty < 1.f )
@@ -386,19 +397,9 @@ uint16 FKeshSweeperGameController::GetMineCountForDifficulty( float Difficulty )
 	else if ( Difficulty > 10.f )
 		Difficulty = 10.f;
 
-	if ( !Plugin.IsValid() )
-		return 0;
-
-	if ( !Plugin->GetView().IsValid() )
-		return 0;
-
-	float Width = Plugin->GetView()->GetWidthSliderValue();
-	float Height = Plugin->GetView()->GetHeightSliderValue();;
-	float GridSize = Height * Width;
-
 	// Mine count goes from grid size^0.5 to grid size^0.9
 	float Power = 0.5f + ( ( Difficulty - 1.f ) / 9.f * 0.4f );
-	float MineCount = pow( GridSize, Power );
+	float MineCount = pow( ( float ) CellCount, Power );
 
 	return ( uint16 ) floor( MineCount );
 }

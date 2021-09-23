@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Matthew "Daekesh" Chapman (c) 1983-2021. All rights reserved.
 
 using UnrealBuildTool;
 

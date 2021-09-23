@@ -1,3 +1,5 @@
+// Copyright Matthew "Daekesh" Chapman (c) 1983-2021. All rights reserved.
+
 #pragma once
 
 #include "KeshSweeperGameView.h"
@@ -324,7 +326,7 @@ void FKeshSweeperGameView::TickUI()
 		if ( WidthPad < 0.f )
 			WidthPad = 0.f;
 
-		float TotalHeight = GameWindow->GetCachedGeometry().GetLocalSize().Y - 70.f;
+		float TotalHeight = GameWindow->GetCachedGeometry().GetLocalSize().Y - 65.f;
 		float HeightPad = TotalHeight - ( Plugin->GetModel()->GetFieldHeight() * CellSize );
 
 		if ( HeightPad < 0.f )
@@ -590,13 +592,11 @@ FSlateColor FKeshSweeperGameView::GetSliderBarColor() const
 
 FText FKeshSweeperGameView::GetMineCount() const
 {
-	if ( !Plugin.IsValid() )
-		return LOCTEXT( "Error", "Error" );
+	uint16 MineCount = FKeshSweeperGameController::GetMineCountForDifficulty( 
+		GetWidthSliderValue() * GetHeightSliderValue(),
+		DifficultyInput->GetValue() 
+	);	
 
-	if ( !Plugin->GetController().IsValid() )
-		return LOCTEXT( "Error", "Error" );
-
-	uint16 MineCount = Plugin->GetController()->GetMineCountForDifficulty( DifficultyInput->GetValue() );	
 	FString MineString = FString::FromInt( MineCount );
 
 	return FText::FromString( MineString );
