@@ -10,6 +10,12 @@ const FCellInfo FKeshSweeperGameModel::DefaultCellInfo = { false, ECellStatus::H
 FKeshSweeperGameModel::FKeshSweeperGameModel( TSharedPtr< class FKeshSweeperEditorModule > InPlugin )
 {
 	Plugin = InPlugin;
+
+	Minefield.SetNum( 0 );
+	MinefieldWidth = 0;
+	MinefieldHeight = 0;
+	MineCount = 0;
+	CellsRevealed = 0;
 }
 
 void FKeshSweeperGameModel::Init()
@@ -22,27 +28,27 @@ void FKeshSweeperGameModel::Destruct()
 
 }
 
-void FKeshSweeperGameModel::SetupCells( uint8 InWidth, uint8 InHeight, TArray<bool> MineLocations )
+void FKeshSweeperGameModel::InitMinefield( uint8 InWidth, uint8 InHeight, TArray< bool > MineLocations )
 {
-	RevealCount = 0;
+	CellsRevealed = 0;
 
 	// Min grid size is 1x1
-	FieldWidth = InWidth > 0 ? InWidth : 1;
-	FieldHeight = InHeight > 0 ? InHeight : 1;
+	MinefieldWidth = InWidth > 0 ? InWidth : 1;
+	MinefieldHeight = InHeight > 0 ? InHeight : 1;
 
-	Cells.SetNum( ( ( uint16 ) FieldWidth ) * ( ( uint16 ) FieldHeight ) );
+	Minefield.SetNum( ( ( uint16 ) MinefieldWidth ) * ( ( uint16 ) MinefieldHeight ) );
 	MineCount = 0;
 
 	// MineLocations's size may not match our cell size. Just being safe.
-	for ( int index = 0; index < Cells.Num(); ++index )
+	for ( int Index = 0; Index < GetMinefieldSize(); ++Index )
 	{
-		Cells[ index ] = FKeshSweeperGameModel::DefaultCellInfo;
+		Minefield[ Index ] = FKeshSweeperGameModel::DefaultCellInfo;
 
-		if ( index < MineLocations.Num() )
+		if ( Index < MineLocations.Num() )
 		{
-			Cells[ index ].bIsMine = MineLocations[ index ];
+			Minefield[ Index ].bIsMine = MineLocations[ Index ];
 
-			if ( MineLocations[ index ] )
+			if ( MineLocations[ Index ] )
 				++MineCount;
 		}
 	}
@@ -50,50 +56,43 @@ void FKeshSweeperGameModel::SetupCells( uint8 InWidth, uint8 InHeight, TArray<bo
 	// Must be at least 1 mine
 	if ( MineCount == 0 )
 	{
-		++MineCount;
-		Cells[ 0 ].bIsMine = true;
+		MineCount = 1;
+		Minefield[ 0 ].bIsMine = true;
 	}
 }
 
 FCellLocation FKeshSweeperGameModel::IndexToXY( uint16 CellIndex ) const
 {
 	return {		
-		( uint8 ) ( CellIndex % FieldWidth ),
-		( uint8 ) ( CellIndex / ( ( uint16 ) FieldWidth ) )
+		( uint8 ) ( CellIndex % MinefieldWidth ),
+		( uint8 ) ( CellIndex / ( ( uint16 ) MinefieldWidth ) )
 	};
 }
 
-uint16 FKeshSweeperGameModel::XYToIndex( const FCellLocation& Loc ) const
+uint16 FKeshSweeperGameModel::XYToIndex( uint8 CellX, uint8 CellY ) const
 {
 	return (
-		( ( uint16 ) Loc.X ) + 
-		( ( uint16 ) FieldWidth ) * ( ( uint16 ) Loc.Y )
+		( ( uint16 ) CellX ) +
+		( ( uint16 ) MinefieldWidth ) * ( ( uint16 ) CellY )
 	);
 }
 
-
-
-const FCellInfo& FKeshSweeperGameModel::GetCellInfo( const FCellLocation& Loc ) const
+const FCellInfo& FKeshSweeperGameModel::GetCellInfo( uint8 CellX, uint8 CellY ) const
 {
-	if ( Loc.X >= FieldWidth || Loc.Y >= FieldHeight )
+	if ( CellX >= MinefieldWidth || CellY >= MinefieldHeight )
 		return FKeshSweeperGameModel::DefaultCellInfo;
 
-	uint16 index = XYToIndex( Loc );
+	uint16 Index = XYToIndex( CellX, CellY );
 
-	if ( index >= Cells.Num() )
+	if ( Index >= GetMinefieldSize() )
 		return FKeshSweeperGameModel::DefaultCellInfo;
 
-	return Cells[ index ];
-}
-
-const FCellInfo& FKeshSweeperGameModel::GetCellInfo( int CellX, int CellY ) const
-{
-	return GetCellInfo( { ( uint8 ) CellX, ( uint8 ) CellY } );
+	return Minefield[ Index ];
 }
 
 uint16 FKeshSweeperGameModel::GetNearbyMineCount( const FCellLocation& Loc ) const
 {
-	if ( Loc.X >= FieldWidth || Loc.Y >= FieldHeight )
+	if ( Loc.X >= MinefieldWidth || Loc.Y >= MinefieldHeight )
 		return 0;
 
 	uint16 NearbyMineCount = 0;
@@ -113,7 +112,7 @@ uint16 FKeshSweeperGameModel::GetNearbyMineCount( const FCellLocation& Loc ) con
 	}
 
 	// Top right
-	if ( Loc.X < ( FieldWidth - 1 ) && Loc.Y > 0 )
+	if ( Loc.X < ( MinefieldWidth - 1 ) && Loc.Y > 0 )
 	{
 		if ( GetCellInfo( Loc.X + 1, Loc.Y - 1 ).bIsMine )
 			++NearbyMineCount;
@@ -130,28 +129,28 @@ uint16 FKeshSweeperGameModel::GetNearbyMineCount( const FCellLocation& Loc ) con
 	// It's a me, cellio!
 
 	// Right
-	if ( Loc.X < ( FieldWidth - 1 ) )
+	if ( Loc.X < ( MinefieldWidth - 1 ) )
 	{
 		if ( GetCellInfo( Loc.X + 1, Loc.Y ).bIsMine )
 			++NearbyMineCount;
 	}
 
 	// Bottom left
-	if ( Loc.X > 0 && Loc.Y < ( FieldHeight - 1 ) )
+	if ( Loc.X > 0 && Loc.Y < ( MinefieldHeight - 1 ) )
 	{
 		if ( GetCellInfo( Loc.X - 1, Loc.Y + 1 ).bIsMine )
 			++NearbyMineCount;
 	}
 
 	// Bottom
-	if ( Loc.Y < ( FieldHeight - 1 ) )
+	if ( Loc.Y < ( MinefieldHeight - 1 ) )
 	{
 		if ( GetCellInfo( Loc.X, Loc.Y + 1 ).bIsMine )
 			++NearbyMineCount;
 	}
 
 	// Bottom right
-	if ( Loc.X < ( FieldWidth - 1 ) && Loc.Y < ( FieldHeight - 1 ) )
+	if ( Loc.X < ( MinefieldWidth - 1 ) && Loc.Y < ( MinefieldHeight - 1 ) )
 	{
 		if ( GetCellInfo( Loc.X + 1, Loc.Y + 1 ).bIsMine )
 			++NearbyMineCount;
@@ -162,70 +161,85 @@ uint16 FKeshSweeperGameModel::GetNearbyMineCount( const FCellLocation& Loc ) con
 
 bool FKeshSweeperGameModel::SuspectCell( const FCellLocation& Loc )
 {
-	uint16 index = XYToIndex( Loc );
-
-	if ( index >= Cells.Num() )
+	if ( Loc.X >= MinefieldWidth || Loc.Y >= MinefieldHeight )
 		return false;
 
-	if ( Cells[ index ].Status != ECellStatus::Hidden )
+	uint16 Index = XYToIndex( Loc );
+
+	if ( Index >= GetMinefieldSize() )
 		return false;
 
-	Cells[ index ].Status = ECellStatus::Enum::Suspect;
+	if ( Minefield[ Index ].Status != ECellStatus::Hidden )
+		return false;
+
+	Minefield[ Index ].Status = ECellStatus::Enum::Suspected;
 	return true;
 }
 
 bool FKeshSweeperGameModel::UnsuspectCell( const FCellLocation& Loc )
 {
-	uint16 index = XYToIndex( Loc );
-
-	if ( index >= Cells.Num() )
+	if ( Loc.X >= MinefieldWidth || Loc.Y >= MinefieldHeight )
 		return false;
 
-	if ( Cells[ index ].Status != ECellStatus::Enum::Suspect )
+	uint16 Index = XYToIndex( Loc );
+
+	if ( Index >= GetMinefieldSize() )
 		return false;
 
-	Cells[ index ].Status = ECellStatus::Hidden;
+	if ( Minefield[ Index ].Status != ECellStatus::Enum::Suspected )
+		return false;
+
+	Minefield[ Index ].Status = ECellStatus::Hidden;
 	return true;
 }
 
 bool FKeshSweeperGameModel::RevealCell( const FCellLocation& Loc )
 {
-	uint16 index = XYToIndex( Loc );
-
-	if ( index >= Cells.Num() )
+	if ( Loc.X >= MinefieldWidth || Loc.Y >= MinefieldHeight )
 		return false;
 
-	if ( Cells[ index ].Status == ECellStatus::Revealed )
+	uint16 Index = XYToIndex( Loc );
+
+	if ( Index >= GetMinefieldSize() )
 		return false;
 
-	Cells[ index ].Status = ECellStatus::Revealed;
-	++RevealCount;
+	if ( Minefield[ Index ].Status == ECellStatus::Revealed )
+		return false;
+
+	Minefield[ Index ].Status = ECellStatus::Revealed;
+
+	if ( !Minefield[ Index ].bIsMine )
+		++CellsRevealed;
+
 	return true;
 }
 
 bool FKeshSweeperGameModel::ExplodeCell( const FCellLocation& Loc )
 {
-	uint16 index = XYToIndex( Loc );
-
-	if ( index >= Cells.Num() )
+	if ( Loc.X >= MinefieldWidth || Loc.Y >= MinefieldHeight )
 		return false;
 
-	if ( Cells[ index ].Status == ECellStatus::Exploded )
+	uint16 Index = XYToIndex( Loc );
+
+	if ( Index >= GetMinefieldSize() )
 		return false;
 
-	Cells[ index ].Status = ECellStatus::Exploded;
+	if ( Minefield[ Index ].Status == ECellStatus::Exploded )
+		return false;
+
+	Minefield[ Index ].Status = ECellStatus::Exploded;
 	return true;
 }
 
-void FKeshSweeperGameModel::RevealAll()
+void FKeshSweeperGameModel::RevealMinefield()
 {
-	for ( int index = 0; index < Cells.Num(); ++index )
+	for ( int Index = 0; Index < GetMinefieldSize(); ++Index )
 	{
 		// Exploded cell is already revealed
-		if ( Cells[ index ].Status != ECellStatus::Exploded )
-			Cells[ index ].Status = ECellStatus::Revealed;
+		if ( Minefield[ Index ].Status != ECellStatus::Exploded )
+			Minefield[ Index ].Status = ECellStatus::Revealed;
 	}
 
 	// This is the amount of non-mine cells revealed
-	RevealCount = ( uint16 ) ( Cells.Num() - MineCount );
+	CellsRevealed = ( uint16 ) ( GetMinefieldSize() - MineCount );
 }

@@ -21,24 +21,6 @@ namespace EGameStatus
 class FKeshSweeperGameController : FTickableEditorObject
 {
 
-protected:
-
-	// Would have used static variables, but can't with floats!
-	static uint8 DefaultWidth() { return 20; };
-	static uint8 DefaultHeight() { return 20; };
-	static float DefaultDifficulty() { return 4.f; };
-
-	static TArray< bool > GenerateRandomMinePlacements( uint16 GridSize, uint16 Count );
-
-	TSharedPtr< class FKeshSweeperEditorModule > Plugin;
-	EGameStatus::Enum GameStatus;
-	TQueue< FCellLocation > CellsToReveal;
-	float TimeSinceAsyncCall;
-
-	void TriggerGameEnd( EGameStatus::Enum );
-	void TriggerError();
-	void AsyncReveal( const FCellLocation& Loc );
-
 public:
 
 	static uint16 GetMineCountForDifficulty( uint16 CellCount, float Difficulty );
@@ -49,10 +31,15 @@ public:
 	void Destruct();
 
 	EGameStatus::Enum GetGameStatus() const { return GameStatus; }
-	void InitiateGame();
+
+	void OnToolbarButtonClick();
 	bool StartNewGame( uint8 Width, uint8 Height, float Difficulty );
+
+	// Called from the View when cells are clicked
 	void SuspectCell( const FCellLocation& Loc );
 	void RevealCell( const FCellLocation& Loc );
+
+	// If this returns true, UI signals are not processed.
 	bool IsRevealingCells() const { return !CellsToReveal.IsEmpty(); }
 
 	/* FTickableEditorObject override */
@@ -61,5 +48,24 @@ public:
 	virtual TStatId GetStatId() const override;
 	virtual void Tick( float DeltaTime ) override;
 	/* end */
+
+protected:
+
+	static TArray< bool > GenerateRandomMinePlacements( uint16 GridSize, uint16 Count );
+
+	TSharedPtr< class FKeshSweeperEditorModule > Plugin;
+	EGameStatus::Enum GameStatus;
+	TQueue< FCellLocation > CellsToReveal;
+	float TimeSinceAsyncCall;
+
+	// Triggers either a win or a loss.
+	void TriggerGameEnd( EGameStatus::Enum );
+	
+	// Shuts down all control functions. The UI still works, but signals aren't processed
+	void TriggerError();
+
+	// Called by the tick method to reveal a single cell
+	// Also adds more cells to the reveal queue based on the surrounding cells
+	void AsyncReveal( const FCellLocation& Loc );
 
 };

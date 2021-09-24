@@ -9,15 +9,14 @@ class FKeshSweeperCommands : public TCommands< FKeshSweeperCommands >
 {
 
 public:
-	
+
 	FKeshSweeperCommands();
 
 	// TCommand<> interface
 	void RegisterCommands() override;
 	// End of TCommand<> interface
 
-public:
-
-	TSharedPtr< FUICommandInfo > ToggleWindow;
+	TSharedPtr< FUICommandList > CommandList;
+	TSharedPtr< FUICommandInfo > OpenWindow;
 
 };

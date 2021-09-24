@@ -8,6 +8,10 @@
 FKeshSweeperGameController::FKeshSweeperGameController( TSharedPtr< class FKeshSweeperEditorModule > InPlugin )
 {
 	Plugin = InPlugin;
+
+	GameStatus = EGameStatus::NotStarted;
+	CellsToReveal.Empty();
+	TimeSinceAsyncCall = 0.f;
 }
 
 void FKeshSweeperGameController::Init()
@@ -29,12 +33,14 @@ void FKeshSweeperGameController::Init()
 		TriggerError();
 		return;
 	}
-
-	GameStatus = EGameStatus::NotStarted;
-	CellsToReveal.Empty();
 }
 
-void FKeshSweeperGameController::InitiateGame()
+void FKeshSweeperGameController::Destruct()
+{
+
+}
+
+void FKeshSweeperGameController::OnToolbarButtonClick()
 {
 	if ( !Plugin.IsValid() )
 		return;
@@ -47,15 +53,14 @@ void FKeshSweeperGameController::InitiateGame()
 
 	if ( GameStatus == EGameStatus::NotStarted )
 	{
-		Plugin->GetView()->SetWidthSliderValue( DefaultWidth() );
-		Plugin->GetView()->SetHeightSliderValue( DefaultHeight() );
-		Plugin->GetView()->SetDifficultySliderValue( DefaultDifficulty() );
+		Plugin->GetView()->SetNewMinefieldWidth( DEFAULT_MINEFIELD_WIDTH );
+		Plugin->GetView()->SetNewMinefieldHeight( DEFAULT_MINEFIELD_HEIGHT );
+		Plugin->GetView()->SetNewMinefieldDifficulty( DEFAULT_MINEFIELD_DIFFICULTY );
 
-		// Default size, 20x10 with a medium difficulty.
 		StartNewGame( 
-			Plugin->GetView()->GetWidthSliderValue(),  
-			Plugin->GetView()->GetHeightSliderValue(),
-			Plugin->GetView()->GetDifficultySliderValue()
+			Plugin->GetView()->GetNewMinefieldWidth(),  
+			Plugin->GetView()->GetNewMinefieldHeight(),
+			Plugin->GetView()->GetNewMinefieldDifficulty()
 		);
 	}
 
@@ -82,22 +87,17 @@ bool FKeshSweeperGameController::StartNewGame( uint8 Width, uint8 Height, float 
 	);
 	
 	CellsToReveal.Empty();
-	Plugin->GetModel()->SetupCells( Width, Height, Mines );
-	Plugin->GetView()->PopulateGrid( Width, Height );
+	Plugin->GetModel()->InitMinefield( Width, Height, Mines );
+	Plugin->GetView()->PopulateMinefield();
 	GameStatus = EGameStatus::InProgress;
 
 	// Automatic win? Woo!
-	if ( Plugin->GetModel()->GetMineCount() == 0 || Plugin->GetModel()->GetMineCount() == Plugin->GetModel()->GetCellCount() )
+	if ( Plugin->GetModel()->GetMineCount() == 0 || Plugin->GetModel()->GetMineCount() >= Plugin->GetModel()->GetMinefieldSize() )
 	{
 		TriggerGameEnd( EGameStatus::Won );
 	}
 
 	return true;
-}
-
-void FKeshSweeperGameController::Destruct()
-{
-
 }
 
 void FKeshSweeperGameController::SuspectCell( const FCellLocation& Loc )
@@ -126,10 +126,10 @@ void FKeshSweeperGameController::SuspectCell( const FCellLocation& Loc )
 		return;
 	}
 
-	if ( Loc.X >= Plugin->GetModel()->GetFieldWidth() )
+	if ( Loc.X >= Plugin->GetModel()->GetMinefieldWidth() )
 		return;
 
-	if ( Loc.Y >= Plugin->GetModel()->GetFieldHeight() )
+	if ( Loc.Y >= Plugin->GetModel()->GetMinefieldHeight() )
 		return;
 
 	const FCellInfo& CellInfo = Plugin->GetModel()->GetCellInfo( Loc );
@@ -141,7 +141,7 @@ void FKeshSweeperGameController::SuspectCell( const FCellLocation& Loc )
 				Plugin->GetView()->InvalidateCell( Loc );
 			break;
 
-		case ECellStatus::Suspect:
+		case ECellStatus::Suspected:
 			if ( Plugin->GetModel()->UnsuspectCell( Loc ) )
 				Plugin->GetView()->InvalidateCell( Loc );
 			break;
@@ -174,10 +174,10 @@ void FKeshSweeperGameController::RevealCell( const FCellLocation& Loc )
 		return;
 	}
 
-	if ( Loc.X >= Plugin->GetModel()->GetFieldWidth() )
+	if ( Loc.X >= Plugin->GetModel()->GetMinefieldWidth() )
 		return;
 
-	if ( Loc.Y >= Plugin->GetModel()->GetFieldHeight() )
+	if ( Loc.Y >= Plugin->GetModel()->GetMinefieldHeight() )
 		return;
 
 	const FCellInfo& CellInfo = Plugin->GetModel()->GetCellInfo( Loc );
@@ -189,6 +189,7 @@ void FKeshSweeperGameController::RevealCell( const FCellLocation& Loc )
 		return;
 	}
 
+	TimeSinceAsyncCall = 0.f;
 	AsyncReveal( Loc );
 }
 
@@ -212,7 +213,10 @@ void FKeshSweeperGameController::AsyncReveal( const FCellLocation& Loc )
 		return;
 	}
 
-	if ( Loc.X >= Plugin->GetModel()->GetFieldWidth() || Loc.Y >= Plugin->GetModel()->GetFieldHeight() )
+	if ( Loc.X >= Plugin->GetModel()->GetMinefieldWidth() )
+		return;
+
+	if ( Loc.Y >= Plugin->GetModel()->GetMinefieldHeight() )
 		return;
 
 	const FCellInfo& CellInfo = Plugin->GetModel()->GetCellInfo( Loc );
@@ -220,22 +224,25 @@ void FKeshSweeperGameController::AsyncReveal( const FCellLocation& Loc )
 	if ( CellInfo.bIsMine )
 		return;
 
-	if ( CellInfo.Status == ECellStatus::Revealed )
+	// Did something go wrong revealing the cell? Like it's already revealed?
+	if ( !Plugin->GetModel()->RevealCell( Loc ) )
 		return;
-
-	Plugin->GetModel()->RevealCell( Loc );
+	
+	// Update the cell's graphics
 	Plugin->GetView()->InvalidateCell( Loc );
 
-	if ( ( Plugin->GetModel()->GetMineCount() + Plugin->GetModel()->GetRevealCount() ) >= Plugin->GetModel()->GetCellCount() )
+	// Won? Woo!
+	if ( ( Plugin->GetModel()->GetMineCount() + Plugin->GetModel()->GetNumberOfCellsRevealed() ) >= Plugin->GetModel()->GetMinefieldSize() )
 	{
 		TriggerGameEnd( EGameStatus::Won );
 		return;
 	}
 
+	// Don't reveal other cells if we have nearby mines!
 	if ( Plugin->GetModel()->GetNearbyMineCount( Loc ) > 0 )
 		return;
 
-	TimeSinceAsyncCall = 0;
+	// Add new cells to the reveal queue
 	FCellLocation Temp;
 	
 	// Top
@@ -255,7 +262,7 @@ void FKeshSweeperGameController::AsyncReveal( const FCellLocation& Loc )
 	}
 
 	// Bottom
-	if ( Loc.Y < ( Plugin->GetModel()->GetFieldHeight() - 1 ) )
+	if ( Loc.Y < ( Plugin->GetModel()->GetMinefieldHeight() - 1 ) )
 	{
 		Temp = Loc;
 		Temp.Y += 1;
@@ -263,7 +270,7 @@ void FKeshSweeperGameController::AsyncReveal( const FCellLocation& Loc )
 	}
 
 	// Right
-	if ( Loc.X < ( Plugin->GetModel()->GetFieldWidth() - 1 ) )
+	if ( Loc.X < ( Plugin->GetModel()->GetMinefieldWidth() - 1 ) )
 	{
 		Temp = Loc;
 		Temp.X += 1;
@@ -280,7 +287,7 @@ void FKeshSweeperGameController::AsyncReveal( const FCellLocation& Loc )
 	}
 
 	// Top right
-	if ( Loc.X < ( Plugin->GetModel()->GetFieldWidth() - 1 ) && Loc.Y > 0 )
+	if ( Loc.X < ( Plugin->GetModel()->GetMinefieldWidth() - 1 ) && Loc.Y > 0 )
 	{
 		Temp = Loc;
 		Temp.X += 1;
@@ -289,7 +296,7 @@ void FKeshSweeperGameController::AsyncReveal( const FCellLocation& Loc )
 	}
 
 	// Bottom left
-	if ( Loc.X > 0 && Loc.Y < ( Plugin->GetModel()->GetFieldHeight() - 1 ) )
+	if ( Loc.X > 0 && Loc.Y < ( Plugin->GetModel()->GetMinefieldHeight() - 1 ) )
 	{
 		Temp = Loc;
 		Temp.X -= 1;
@@ -298,7 +305,7 @@ void FKeshSweeperGameController::AsyncReveal( const FCellLocation& Loc )
 	}
 
 	// Bottom right
-	if ( Loc.X < ( Plugin->GetModel()->GetFieldWidth() - 1 ) && Loc.Y < ( Plugin->GetModel()->GetFieldHeight() - 1 ) )
+	if ( Loc.X < ( Plugin->GetModel()->GetMinefieldWidth() - 1 ) && Loc.Y < ( Plugin->GetModel()->GetMinefieldHeight() - 1 ) )
 	{
 		Temp = Loc;
 		Temp.X += 1;
@@ -313,6 +320,8 @@ void FKeshSweeperGameController::TriggerGameEnd( EGameStatus::Enum NewStatus )
 {
 	if ( GameStatus != EGameStatus::InProgress )
 		return;
+
+	CellsToReveal.Empty();
 
 	if ( !Plugin.IsValid() )
 	{
@@ -332,10 +341,9 @@ void FKeshSweeperGameController::TriggerGameEnd( EGameStatus::Enum NewStatus )
 		return;
 	}
 
-	CellsToReveal.Empty();
-	Plugin->GetModel()->RevealAll();
+	Plugin->GetModel()->RevealMinefield();
 	GameStatus = NewStatus;
-	Plugin->GetView()->Invalidate();
+	Plugin->GetView()->InvalidateMinefield();
 }
 
 void FKeshSweeperGameController::TriggerError()
@@ -411,6 +419,7 @@ TArray< bool > FKeshSweeperGameController::GenerateRandomMinePlacements( uint16 
 	TArray< bool > Mines;
 	Mines.SetNum( GridSize );
 
+	// "Quick" and dirty
 	// Statistically the first and last cells have half the chance of the others.
 	// I can live with this.
 	for ( int Index = 0; Index < Count; ++Index )

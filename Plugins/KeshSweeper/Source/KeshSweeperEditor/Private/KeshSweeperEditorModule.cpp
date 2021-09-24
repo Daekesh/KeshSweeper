@@ -9,60 +9,23 @@
 
 #define LOCTEXT_NAMESPACE "FKeshSweeperEditorModule"
 
+TSharedPtr< FKeshSweeperEditorModule > FKeshSweeperEditorModule::Plugin = nullptr;
+
 void FKeshSweeperEditorModule::StartupModule()
 {
+	FKeshSweeperEditorModule::Plugin = MakeShareable( this );
+
 	// Register slate style overrides
 	FKeshSweeperStyle::Initialize();
 
-	GameModel = MakeShareable( new FKeshSweeperGameModel( MakeShareable( this ) ) );
-	GameView = MakeShareable( new FKeshSweeperGameView( MakeShareable( this ) ) );
-	GameController = MakeShareable( new FKeshSweeperGameController( MakeShareable( this ) ) );
-
-	GameModel->Init();
-	GameView->Init();
-	GameController->Init();
-
 	// Register commands
 	FKeshSweeperCommands::Register();
-
-	if ( !CommandList.IsValid() )
-	{
-		CommandList = MakeShareable( new FUICommandList );
-
-		{
-			FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>( TEXT( "LevelEditor" ) );
-			CommandList->Append( LevelEditorModule.GetGlobalLevelEditorActions() );
-
-			CommandList->MapAction(
-				FKeshSweeperCommands::Get().ToggleWindow,
-				FExecuteAction::CreateRaw( this, &FKeshSweeperEditorModule::HandleToggleWindowExecute ),
-				FCanExecuteAction::CreateRaw( this, &FKeshSweeperEditorModule::HandleToggleWindowCanExecute )
-			);
-
-			struct Local
-			{
-				static void AddToolbarCommands( FToolBarBuilder& ToolbarBuilder )
-				{
-					ToolbarBuilder.AddToolBarButton( FKeshSweeperCommands::Get().ToggleWindow );
-				}
-			};
-
-			TSharedRef< FExtender > ToolbarExtender( new FExtender() );
-
-			ToolbarExtender->AddToolBarExtension(
-				TEXT( "Game" ),
-				EExtensionHook::After,
-				CommandList.ToSharedRef(),
-				FToolBarExtensionDelegate::CreateStatic( &Local::AddToolbarCommands )
-			);
-
-			LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender( ToolbarExtender );
-		}
-	}
 }
 
 void FKeshSweeperEditorModule::ShutdownModule()
 {
+	FKeshSweeperEditorModule::Plugin.Reset();
+
 	FKeshSweeperStyle::Shutdown();
 	FKeshSweeperCommands::Unregister();
 
@@ -76,15 +39,25 @@ void FKeshSweeperEditorModule::ShutdownModule()
 		GameModel->Destruct();	
 }
 
-void FKeshSweeperEditorModule::HandleToggleWindowExecute()
+void FKeshSweeperEditorModule::OnToolbarButtonClicked()
 {
+	// Only instantiate these when we need them. 
+	// Avoids wasting resources and creating tickable objects.
 	if ( !GameController.IsValid() )
-		return;
+	{
+		GameModel = MakeShareable( new FKeshSweeperGameModel( Plugin ) );
+		GameView = MakeShareable( new FKeshSweeperGameView( Plugin ) );
+		GameController = MakeShareable( new FKeshSweeperGameController( Plugin ) );
 
-	GameController->InitiateGame();
+		GameModel->Init();
+		GameView->Init();
+		GameController->Init();
+	}
+
+	GameController->OnToolbarButtonClick();
 }
 
-bool FKeshSweeperEditorModule::HandleToggleWindowCanExecute()
+bool FKeshSweeperEditorModule::CanClickToolbarButton()
 {
 	return true;
 }

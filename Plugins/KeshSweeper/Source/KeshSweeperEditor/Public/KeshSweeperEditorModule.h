@@ -4,27 +4,32 @@
 
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
-#include "LevelEditor.h"
+
+#define DEFAULT_MINEFIELD_WIDTH 20
+#define DEFAULT_MINEFIELD_HEIGHT 20
+#define DEFAULT_MINEFIELD_DIFFICULTY 4.f
 
 class FKeshSweeperEditorModule : public IModuleInterface
 {
 
 protected:
 
-	TSharedPtr< FUICommandList > CommandList;
 	TSharedPtr< class FKeshSweeperGameModel > GameModel;
 	TSharedPtr< class FKeshSweeperGameView > GameView;
 	TSharedPtr< class FKeshSweeperGameController > GameController;
 
 public:
 
+	// I feel this is a bit hacky, but meh!
+	static TSharedPtr< FKeshSweeperEditorModule > Plugin;
+
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
 	// Handle the commands
-	void HandleToggleWindowExecute();
-	bool HandleToggleWindowCanExecute();
+	void OnToolbarButtonClicked();
+	bool CanClickToolbarButton();
 
 	TSharedPtr< class FKeshSweeperGameModel > GetModel() { return GameModel; };
 	TSharedPtr< class FKeshSweeperGameView > GetView() { return GameView; };
