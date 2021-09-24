@@ -14,7 +14,7 @@ FKeshSweeperCommands::FKeshSweeperCommands()
 		FKeshSweeperStyle::Get()->GetStyleSetName()
 	)
 {
-	//Plugin = InPlugin;
+
 }
 
 void FKeshSweeperCommands::RegisterCommands()

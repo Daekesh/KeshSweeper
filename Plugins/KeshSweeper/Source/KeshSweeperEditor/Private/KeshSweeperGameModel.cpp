@@ -77,9 +77,14 @@ uint16 FKeshSweeperGameModel::XYToIndex( uint8 CellX, uint8 CellY ) const
 	);
 }
 
+bool FKeshSweeperGameModel::IsValidLocation( uint8 CellX, uint8 CellY ) const
+{
+	return ( CellX < MinefieldWidth && CellY < MinefieldHeight );
+}
+
 const FCellInfo& FKeshSweeperGameModel::GetCellInfo( uint8 CellX, uint8 CellY ) const
 {
-	if ( CellX >= MinefieldWidth || CellY >= MinefieldHeight )
+	if ( !IsValidLocation( CellX, CellY ) )
 		return FKeshSweeperGameModel::DefaultCellInfo;
 
 	uint16 Index = XYToIndex( CellX, CellY );
@@ -92,7 +97,7 @@ const FCellInfo& FKeshSweeperGameModel::GetCellInfo( uint8 CellX, uint8 CellY ) 
 
 uint16 FKeshSweeperGameModel::GetNearbyMineCount( const FCellLocation& Loc ) const
 {
-	if ( Loc.X >= MinefieldWidth || Loc.Y >= MinefieldHeight )
+	if ( !IsValidLocation( Loc ) )
 		return 0;
 
 	uint16 NearbyMineCount = 0;
@@ -161,7 +166,7 @@ uint16 FKeshSweeperGameModel::GetNearbyMineCount( const FCellLocation& Loc ) con
 
 bool FKeshSweeperGameModel::SuspectCell( const FCellLocation& Loc )
 {
-	if ( Loc.X >= MinefieldWidth || Loc.Y >= MinefieldHeight )
+	if ( !IsValidLocation( Loc ) )
 		return false;
 
 	uint16 Index = XYToIndex( Loc );
@@ -178,7 +183,7 @@ bool FKeshSweeperGameModel::SuspectCell( const FCellLocation& Loc )
 
 bool FKeshSweeperGameModel::UnsuspectCell( const FCellLocation& Loc )
 {
-	if ( Loc.X >= MinefieldWidth || Loc.Y >= MinefieldHeight )
+	if ( !IsValidLocation( Loc ) )
 		return false;
 
 	uint16 Index = XYToIndex( Loc );
@@ -195,7 +200,7 @@ bool FKeshSweeperGameModel::UnsuspectCell( const FCellLocation& Loc )
 
 bool FKeshSweeperGameModel::RevealCell( const FCellLocation& Loc )
 {
-	if ( Loc.X >= MinefieldWidth || Loc.Y >= MinefieldHeight )
+	if ( !IsValidLocation( Loc ) )
 		return false;
 
 	uint16 Index = XYToIndex( Loc );
@@ -216,7 +221,7 @@ bool FKeshSweeperGameModel::RevealCell( const FCellLocation& Loc )
 
 bool FKeshSweeperGameModel::ExplodeCell( const FCellLocation& Loc )
 {
-	if ( Loc.X >= MinefieldWidth || Loc.Y >= MinefieldHeight )
+	if ( !IsValidLocation( Loc ) )
 		return false;
 
 	uint16 Index = XYToIndex( Loc );

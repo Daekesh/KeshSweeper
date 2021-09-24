@@ -54,6 +54,8 @@ public:
 	FCellLocation IndexToXY( uint16 CellIndex ) const;
 	uint16 XYToIndex( const FCellLocation& Loc ) const { return XYToIndex( Loc.X, Loc.Y ); };
 	uint16 XYToIndex( uint8 CellX, uint8 CellY ) const;
+	bool IsValidLocation( const FCellLocation& Loc ) const { return IsValidLocation( Loc.X, Loc.Y ); };
+	bool IsValidLocation( uint8 CellX, uint8 CellY ) const;
 
 	// Minefield cell information
 	const FCellInfo& GetCellInfo( uint8 CellX, uint8 CellY ) const;
