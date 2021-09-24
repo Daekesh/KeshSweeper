@@ -19,7 +19,7 @@
   - The game ends when either all non-mine spaces have been revealed or when a mine explodes.
   - When the game ends, all cells are revealed.
   
-  - MVC approach
+- MVC approach
    - Model stores, and has authority over, the state of the current grid. Handles a maximum grid size
        of 255x255 and up to 65535 mines.
    - View displays the current grid and supplies options for new games. Makes sure to store the 
