@@ -30,6 +30,7 @@ public:
 	void Init();
 	void Destruct();
 
+	TSharedPtr< class FKeshSweeperEditorModule > GetPlugin() { return Plugin; };
 	EGameStatus::Enum GetGameStatus() const { return GameStatus; }
 
 	void OnToolbarButtonClick();

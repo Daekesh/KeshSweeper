@@ -136,12 +136,12 @@ void FKeshSweeperGameController::SuspectCell( const FCellLocation& Loc )
 	{
 		case ECellStatus::Hidden:
 			if ( Plugin->GetModel()->SuspectCell( Loc ) )
-				Plugin->GetView()->InvalidateCell( Loc );
+				Plugin->GetView()->UpdateCellDisplay( Loc );
 			break;
 
 		case ECellStatus::Suspected:
 			if ( Plugin->GetModel()->UnsuspectCell( Loc ) )
-				Plugin->GetView()->InvalidateCell( Loc );
+				Plugin->GetView()->UpdateCellDisplay( Loc );
 			break;
 	}
 }
@@ -221,7 +221,7 @@ void FKeshSweeperGameController::AsyncReveal( const FCellLocation& Loc )
 		return;
 	
 	// Update the cell's graphics
-	Plugin->GetView()->InvalidateCell( Loc );
+	Plugin->GetView()->UpdateCellDisplay( Loc );
 
 	// Won? Woo!
 	if ( ( Plugin->GetModel()->GetMineCount() + Plugin->GetModel()->GetNumberOfCellsRevealed() ) >= Plugin->GetModel()->GetMinefieldSize() )
@@ -335,7 +335,7 @@ void FKeshSweeperGameController::TriggerGameEnd( EGameStatus::Enum NewStatus )
 
 	Plugin->GetModel()->RevealMinefield();
 	GameStatus = NewStatus;
-	Plugin->GetView()->InvalidateMinefield();
+	Plugin->GetView()->UpdateMinefieldDisplay();
 }
 
 void FKeshSweeperGameController::TriggerError()

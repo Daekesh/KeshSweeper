@@ -40,6 +40,8 @@ public:
 	void Init();
 	void Destruct();
 
+	TSharedPtr< class FKeshSweeperEditorModule > GetPlugin() { return Plugin; };
+
 	// Minefield information
 	uint16 GetMinefieldSize() const { return ( uint16 ) Minefield.Num(); }
 	uint8 GetMinefieldWidth() const { return MinefieldWidth; }

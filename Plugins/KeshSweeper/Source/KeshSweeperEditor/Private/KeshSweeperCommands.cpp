@@ -26,18 +26,8 @@ void FKeshSweeperCommands::RegisterCommands()
 	if ( CommandList.IsValid() )
 		return;
 
-	TSharedPtr< class FSlateStyleSet > StyleSet = FKeshSweeperStyle::Get();
-
-	if ( !StyleSet.IsValid() )
-		return;
-
 	// Assigns style based on the variable name
 	UI_COMMAND( OpenWindow, "Kesh Sweeper", "Opens the Kesh Sweeper window", EUserInterfaceActionType::Button, FInputGesture() );
-
-	UTexture2D* TargetIcon = LoadObject< UTexture2D >( nullptr, TEXT( "/Engine/EditorMaterials/TargetIcon" ) );
-	check( TargetIcon );
-	
-	StyleSet->Set( "KeshSweeperStyle.OpenWindow", new FSlateImageBrush( TargetIcon, FVector2D( 40.f, 40.f ) ) );
 
 	// Start a scope
 	{

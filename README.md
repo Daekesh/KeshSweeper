@@ -20,9 +20,9 @@
   - When the game ends, all cells are revealed.
   
 - MVC approach
-   - Model stores, and has authority over, the state of the current grid. Handles a maximum grid size
-       of 255x255 and up to 65535 mines.
-   - View displays the current grid and supplies options for new games. Makes sure to store the 
+   - Model stores, and has authority over, the state of the current minefield. Handles a maximum 
+       minefield size of 255x255 and up to 65535 mines.
+   - View displays the current minefield and supplies options for new games. Makes sure to store the 
        authoratitive value of the sliders, rather than relying to the Slate objects, as the tab can
        be destroyed and recreated at any time. The view is persistent between tabs. When it is
        recreated, it displays exactly the same view as before.
@@ -36,25 +36,29 @@
 - State machine driven
   - The state of the game is determined by an enum, EGameStatus (Not Started, In Progress, Won, Lost 
       and Error.) All interactions and flow are governed by this state.
-  - Each cell in the grid is governed by a state, ECellStatus (Hidden, Suspected, Revealed and 
+  - Each cell in the minefield is governed by a state, ECellStatus (Hidden, Suspected, Revealed and 
      Exploded,) and a mine flag.
 
 - UI details
   - Done entirely in c++ using standard editor resources. No assets required.
   - Plenty of Slate code if you're looking for examples.
   - Button is added to the main toolbar to open the game tab.
-  - Slider for the width and height of the grid. These change their maximum value depending on what
-      will fit in the window. You can still change the size of the window after starting a game and
-      hide part of the minefield, though. You can enter the height and width manually via text.
+  - The tab has its own class, extended from SDockTab, that handles the basic layout. The View 
+      class handles the higher level operations such as laying out the minefield and handling click
+      events.
+  - Sliders for the width and height of a new minefield. These change their maximum value depending 
+      on what will fit in the window. You can still change the size of the window after starting a 
+      game and hide part of the minefield, though. You can enter the height and width manually via
+      text.
   - Slider for the difficulty. Values from 1 to 10. An algorithm sets the number of mines depending
-      on the size of the grid determined by the width and height sliders. From grid size ^ 0.5 to 
-      grid size ^ 0.9. You cannot manually enter the number of mines.
+      on the size of the mine determined by the width and height sliders. From minefield size ^ 0.5 
+      to minefield size ^ 0.9. You cannot manually enter the number of mines.
   - Status displays the current state of the game (Not started, In Progress, Won, Lost and Error.)
   - New game button discards the current game and starts a new one, based on the options selected.
-  - The grid itself is represented by a Canvas object which handles mouse input. I figured it was
-      more efficient to have a single "button" which works out which cell was clicked, rather than
-      have, potentially, up to 65k buttons.
-  - Each cell in the grid is represented by a state machine governed custom Slate object, derived
-      from SOverlay.
+  - The minefield itself is represented by a Canvas object which handles mouse input. I figured it 
+      was more efficient to have a single "button" which works out which cell was clicked, rather
+      than have, potentially, up to 65k buttons.
+  - Each cell in the minefield is represented by a state machine governed custom Slate object, 
+      derived from SOverlay.
 
   Have fun!

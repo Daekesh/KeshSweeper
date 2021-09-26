@@ -1,7 +1,10 @@
 // Copyright Matthew "Daekesh" Chapman (c) 1983-2021. All rights reserved.
 
 #include "KeshSweeperMinefieldCell.h"
+#include "KeshSweeperGameModel.h"
 #include "KeshSweeperStyle.h"
+
+#define LOCTEXT_NAMESPACE "FKeshSweeperEditorModule"
 
 // Avoid namespace pollution
 namespace ECellLayers
@@ -17,16 +20,15 @@ namespace ECellLayers
 	};
 }
 
-#define LOCTEXT_NAMESPACE "FKeshSweeperEditorModule"
-
 SKeshSweeperMinefieldCell::SKeshSweeperMinefieldCell()
 {
-
+	Model = nullptr;
+	Loc = { 0, 0 };
 }
 
 void SKeshSweeperMinefieldCell::Construct( const FArguments& InArgs )
 {
-	Plugin = InArgs._Plugin;
+	Model = InArgs._Model;
 	Loc = InArgs._Loc;
 
 	TSharedPtr< class FSlateStyleSet > StyleSet = FKeshSweeperStyle::Get();
@@ -80,12 +82,9 @@ void SKeshSweeperMinefieldCell::Construct( const FArguments& InArgs )
 	AddSlot( ECellLayers::Suspected          )[ Suspect            .ToSharedRef() ];
 }
 
-void SKeshSweeperMinefieldCell::Invalidate()
+void SKeshSweeperMinefieldCell::UpdateDisplay()
 {
-	if ( !Plugin.IsValid() )
-		return;
-
-	if ( !Plugin->GetModel().IsValid() )
+	if ( !Model.IsValid() )
 		return;
 
 	TSharedPtr< class FSlateStyleSet > StyleSet = FKeshSweeperStyle::Get();
@@ -93,10 +92,10 @@ void SKeshSweeperMinefieldCell::Invalidate()
 	if ( !StyleSet.IsValid() )
 		return;
 
-	const FCellInfo& CellInfo = Plugin->GetModel()->GetCellInfo( Loc );
+	const FCellInfo& CellInfo = Model->GetCellInfo( Loc );
 	
 #define VisibilityMacro( Widget, NewVisibility ) \
-	if ( Widget->GetVisibility() != NewVisibility ) Widget->SetVisibility( NewVisibility );
+	if ( Widget.IsValid() && Widget->GetVisibility() != NewVisibility ) Widget->SetVisibility( NewVisibility );
 
 	switch ( CellInfo.Status )
 	{
@@ -139,7 +138,7 @@ void SKeshSweeperMinefieldCell::Invalidate()
 
 	if ( CellInfo.Status == ECellStatus::Revealed && !CellInfo.bIsMine )
 	{
-		uint16 NearbyMineCount = Plugin->GetModel()->GetNearbyMineCount( Loc );
+		uint16 NearbyMineCount = Model->GetNearbyMineCount( Loc );
 
 		if ( NearbyMineCount > 8 )
 			NearbyMineCount = 8;
