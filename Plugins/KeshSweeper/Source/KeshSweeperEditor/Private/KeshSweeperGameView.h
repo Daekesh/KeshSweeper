@@ -5,20 +5,22 @@
 #include "CoreMinimal.h"
 #include "SlateBasics.h"
 
+struct FCellLocation;
+
 class FKeshSweeperGameView : public TSharedFromThis< FKeshSweeperGameView >
 {
 
 public:
 
 	// Width and height of the minefield cells (in slate units.)
-	static const float CellSize; 
+	static const float CellSize;
 
 	FKeshSweeperGameView( TSharedPtr< class FKeshSweeperEditorModule > InPlugin );
 
 	void Init();
 	void Destruct();
 
-	TSharedPtr< class FKeshSweeperEditorModule > GetPlugin() { return Plugin; };
+	TSharedPtr< class FKeshSweeperEditorModule > GetPlugin() const { return Plugin; };
 
 	void ShowTab();
 	bool IsTabOpen() const { return Tab.IsValid(); }
@@ -28,7 +30,7 @@ public:
 	uint8 GetNewMinefieldWidth() const { return NewMinefieldWidth; };
 	uint8 GetNewMinefieldHeight() const { return NewMinefieldHeight; };
 	float GetNewMinefieldDifficulty() const { return NewMinefieldDifficulty; };
-	
+
 	// Called externally to set the new values
 	void SetNewMinefieldWidth( uint8 NewVal );
 	void SetNewMinefieldHeight( uint8 NewVal );
@@ -43,7 +45,7 @@ public:
 	bool PopulateMinefield();
 
 	// Updates the display of a single cell
-	void UpdateCellDisplay( const struct FCellLocation& Loc );
+	void UpdateCellDisplay( const FCellLocation& Loc );
 
 	// Updates the display for the entire minefield
 	void UpdateMinefieldDisplay();

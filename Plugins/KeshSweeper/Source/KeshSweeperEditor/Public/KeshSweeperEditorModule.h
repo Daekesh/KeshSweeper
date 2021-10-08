@@ -31,8 +31,8 @@ public:
 	void OnToolbarButtonClicked();
 	bool CanClickToolbarButton();
 
-	TSharedPtr< class FKeshSweeperGameModel > GetModel() { return GameModel; };
-	TSharedPtr< class FKeshSweeperGameView > GetView() { return GameView; };
-	TSharedPtr< class FKeshSweeperGameController > GetController() { return GameController; };
+	TSharedPtr< class FKeshSweeperGameModel > GetModel() const { return GameModel; };
+	TSharedPtr< class FKeshSweeperGameView > GetView() const { return GameView; };
+	TSharedPtr< class FKeshSweeperGameController > GetController() const { return GameController; };
 
 };

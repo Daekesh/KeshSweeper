@@ -4,16 +4,10 @@
 
 #define LOCTEXT_NAMESPACE "FKeshSweeperRuntimeModule"
 
-void FKeshSweeperRuntimeModule::StartupModule()
-{
+void FKeshSweeperRuntimeModule::StartupModule() {}
 
-}
-
-void FKeshSweeperRuntimeModule::ShutdownModule()
-{
-
-}
+void FKeshSweeperRuntimeModule::ShutdownModule() {}
 
 #undef LOCTEXT_NAMESPACE
-	
+
 IMPLEMENT_MODULE( FKeshSweeperRuntimeModule, KeshSweeperRuntime )

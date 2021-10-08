@@ -12,11 +12,7 @@ class SKeshSweeperTab : public SDockTab
 public:
 
 	SLATE_BEGIN_ARGS( SKeshSweeperTab )
-		: _View( nullptr )
-	{
-
-	}
-
+			: _View( nullptr ) { }
 		SLATE_ARGUMENT( TSharedPtr< class FKeshSweeperGameView >, View )
 	SLATE_END_ARGS()
 
@@ -26,14 +22,14 @@ public:
 
 	void Construct( const FArguments& InArgs );
 
-	TSharedPtr< SSpinBox< uint8 > > GetNewMinefieldWidthSlider() { return NewMinefieldWidthSlider; };
-	TSharedPtr< SSpinBox< uint8 > > GetNewMinefieldHeightSlider() { return NewMinefieldHeightSlider; };
-	TSharedPtr< SSlider > GetNewMinefieldDifficultySlider() { return NewMinefieldDifficultySlider; };
-	TSharedPtr< SButton > GetStartNewGameButton() { return StartNewGameButton; };
-	TSharedPtr< SBox > GetMinefieldContainer() { return MinefieldContainer; };
-	TSharedPtr< SCanvas > GetMinefield() { return Minefield; };
+	TSharedPtr< SSpinBox< uint8 > > GetNewMinefieldWidthSlider() const { return NewMinefieldWidthSlider; };
+	TSharedPtr< SSpinBox< uint8 > > GetNewMinefieldHeightSlider() const { return NewMinefieldHeightSlider; };
+	TSharedPtr< SSlider > GetNewMinefieldDifficultySlider() const { return NewMinefieldDifficultySlider; };
+	TSharedPtr< SButton > GetStartNewGameButton() const { return StartNewGameButton; };
+	TSharedPtr< SBox > GetMinefieldContainer() const { return MinefieldContainer; };
+	TSharedPtr< SCanvas > GetMinefield() const { return Minefield; };
 
-	void FixWidgets();
+	void FixWidgets() const;
 
 protected:
 
