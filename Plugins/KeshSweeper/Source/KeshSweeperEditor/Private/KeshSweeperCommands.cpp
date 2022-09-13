@@ -1,8 +1,10 @@
 // Copyright Matthew "Daekesh" Chapman (c) 1983-2021. All rights reserved.
 
 #include "KeshSweeperCommands.h"
+#include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "KeshSweeperEditorModule.h"
 #include "LevelEditor.h"
+#include "Styling/SlateStyle.h"
 
 #define LOCTEXT_NAMESPACE "FKeshSweeperEditorModule"
 
@@ -14,14 +16,10 @@ FKeshSweeperCommands::FKeshSweeperCommands()
 		FKeshSweeperStyle::Get()->GetStyleSetName()
 	)
 {
-
 }
 
 void FKeshSweeperCommands::RegisterCommands()
 {
-	if ( !FKeshSweeperEditorModule::Plugin.IsValid() )
-		return;
-
 	// Only register once
 	if ( CommandList.IsValid() )
 		return;
@@ -39,8 +37,8 @@ void FKeshSweeperCommands::RegisterCommands()
 
 		CommandList->MapAction(
 			OpenWindow,
-			FExecuteAction::CreateRaw( FKeshSweeperEditorModule::Plugin.Get(), &FKeshSweeperEditorModule::OnToolbarButtonClicked ),
-			FCanExecuteAction::CreateRaw( FKeshSweeperEditorModule::Plugin.Get(), &FKeshSweeperEditorModule::CanClickToolbarButton )
+			FExecuteAction::CreateStatic( &FKeshSweeperEditorModule::OnToolbarButtonClicked ),
+			FCanExecuteAction::CreateStatic( &FKeshSweeperEditorModule::CanClickToolbarButton )
 		);
 
 		struct Local

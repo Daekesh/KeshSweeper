@@ -35,12 +35,10 @@ public:
 
 	static const FCellInfo DefaultCellInfo;
 
-	FKeshSweeperGameModel( TSharedPtr< class FKeshSweeperEditorModule > InPlugin );
+	FKeshSweeperGameModel();
 
 	void Init();
 	void Destruct();
-
-	TSharedPtr< class FKeshSweeperEditorModule > GetPlugin() { return Plugin; };
 
 	// Minefield information
 	uint16 GetMinefieldSize() const { return ( uint16 ) Minefield.Num(); }
@@ -72,8 +70,6 @@ public:
 	void RevealMinefield();
 
 protected:
-
-	TSharedPtr< class FKeshSweeperEditorModule > Plugin;
 
 	TArray< FCellInfo > Minefield;
 	uint8 MinefieldWidth;

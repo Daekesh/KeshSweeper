@@ -3,8 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Widgets/SOverlay.h"
 #include "KeshSweeperGameModel.h"
-#include "SlateBasics.h"
+
+class SBox;
+class SColorBlock;
+class SImage;
+class STextBlock;
 
 class SKeshSweeperMinefieldCell : public SOverlay
 {
@@ -13,9 +18,9 @@ public:
 
 	SLATE_BEGIN_ARGS( SKeshSweeperMinefieldCell )
 		: _Model( nullptr )
-	    , _Loc( { 0, 0 } ) { }
-
-		SLATE_ARGUMENT( TSharedPtr< class FKeshSweeperGameModel >, Model )
+	    , _Loc( { 0, 0 } )
+		{ }
+		SLATE_ARGUMENT( TSharedPtr< FKeshSweeperGameModel >, Model )
 		SLATE_ARGUMENT( FCellLocation, Loc )
 	SLATE_END_ARGS()
 
@@ -29,7 +34,7 @@ public:
 
 protected:
 
-	TSharedPtr< class FKeshSweeperGameModel > Model;
+	TSharedPtr< FKeshSweeperGameModel > Model;
 
 	FCellLocation Loc;
 

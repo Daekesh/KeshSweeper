@@ -3,7 +3,7 @@
 #pragma once
 
 #include "KeshSweeperStyle.h"
-#include "SlateBasics.h"
+#include "Framework/Commands/Commands.h"
 
 class FKeshSweeperCommands : public TCommands< FKeshSweeperCommands >
 {

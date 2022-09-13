@@ -1,7 +1,9 @@
 // Copyright Matthew "Daekesh" Chapman (c) 1983-2021. All rights reserved.
 
 #include "KeshSweeperStyle.h"
-#include "SlateBasics.h"
+#include "Engine/Texture2D.h"
+#include "Styling/SlateStyle.h"
+#include "Styling/SlateStyleRegistry.h"
 
 TSharedPtr< class FSlateStyleSet > FKeshSweeperStyle::StyleSet = nullptr;
 

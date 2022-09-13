@@ -3,9 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SlateBasics.h"
+#include "InputCoreTypes.h"
+#include "KeshSweeperGameModel.h"
 
-struct FCellLocation;
+class FKeshSweeperEditorModule;
+class FReply;
+class SKeshSweeperTab;
+class SDockTab;
+class FSpawnTabArgs;
+struct FGeometry;
+struct FPointerEvent;
 
 class FKeshSweeperGameView : public TSharedFromThis< FKeshSweeperGameView >
 {
@@ -15,12 +22,10 @@ public:
 	// Width and height of the minefield cells (in slate units.)
 	static const float CellSize;
 
-	FKeshSweeperGameView( TSharedPtr< class FKeshSweeperEditorModule > InPlugin );
+	FKeshSweeperGameView();
 
 	void Init();
 	void Destruct();
-
-	TSharedPtr< class FKeshSweeperEditorModule > GetPlugin() const { return Plugin; };
 
 	void ShowTab();
 	bool IsTabOpen() const { return Tab.IsValid(); }
@@ -56,8 +61,7 @@ protected:
 
 	static FCellLocation MouseEventToCellLocation( const FGeometry& Geometry, const FPointerEvent& Event );
 
-	TSharedPtr< class FKeshSweeperEditorModule > Plugin;
-	TSharedPtr< class SKeshSweeperTab > Tab;
+	TSharedPtr< SKeshSweeperTab > Tab;
 
 	FKey MouseDownButton;
 	FCellLocation MouseDownCell;
@@ -73,6 +77,6 @@ protected:
 	FReply OnNewGameButtonClicked();
 	FReply OnMinefieldMouseButtonDown( const FGeometry& Geometry, const FPointerEvent& Event );
 	FReply OnMinefieldMouseButtonUp( const FGeometry& Geometry, const FPointerEvent& Event );
-	void OnMinefieldClicked( FKey MouseButton, const struct FCellLocation& Cell );
+	void OnMinefieldClicked( FKey MouseButton, const FCellLocation& Cell );
 
 };

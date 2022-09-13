@@ -3,8 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SlateBasics.h"
 #include "Widgets/Docking/SDockTab.h"
+
+class FKeshSweeperGameView;
+class SBox;
+class SButton;
+class SCanvas;
+class SSlider;
+template<typename NumericType>
+class SSpinBox;
+struct FSlateColor;
 
 class SKeshSweeperTab : public SDockTab
 {
@@ -12,8 +20,9 @@ class SKeshSweeperTab : public SDockTab
 public:
 
 	SLATE_BEGIN_ARGS( SKeshSweeperTab )
-			: _View( nullptr ) { }
-		SLATE_ARGUMENT( TSharedPtr< class FKeshSweeperGameView >, View )
+		: _View( nullptr ) 
+		{ }
+		SLATE_ARGUMENT( TSharedPtr< FKeshSweeperGameView >, View )
 	SLATE_END_ARGS()
 
 	static const FName TabName;
@@ -35,7 +44,7 @@ protected:
 
 	static const TArray< FText > StatusText;
 
-	TSharedPtr< class FKeshSweeperGameView > View;
+	TSharedPtr< FKeshSweeperGameView > View;
 
 	TSharedPtr< SSpinBox< uint8 > > NewMinefieldWidthSlider;
 	TSharedPtr< SSpinBox< uint8 > > NewMinefieldHeightSlider;

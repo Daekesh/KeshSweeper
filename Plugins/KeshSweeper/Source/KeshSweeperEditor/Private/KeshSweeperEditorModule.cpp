@@ -6,15 +6,47 @@
 #include "KeshSweeperGameModel.h"
 #include "KeshSweeperGameView.h"
 #include "KeshSweeperGameController.h"
+#include "Modules/ModuleManager.h"
 
 #define LOCTEXT_NAMESPACE "FKeshSweeperEditorModule"
 
-TSharedPtr< FKeshSweeperEditorModule > FKeshSweeperEditorModule::Plugin = nullptr;
+FKeshSweeperEditorModule& FKeshSweeperEditorModule::Get()
+{
+	return FModuleManager::GetModuleChecked< FKeshSweeperEditorModule >( "KeshSweeperEditor" );
+}
+
+FKeshSweeperEditorModule* FKeshSweeperEditorModule::GetPtr()
+{
+	return static_cast< FKeshSweeperEditorModule* >( FModuleManager::Get().GetModule( "KeshSweeperEditor" ) );
+}
+
+void FKeshSweeperEditorModule::OnToolbarButtonClicked()
+{
+	FKeshSweeperEditorModule& Module = FKeshSweeperEditorModule::Get();
+
+	// Only instantiate these when we need them. 
+	// Avoids wasting resources and creating tickable objects.
+	if ( !Module.GameController.IsValid() )
+	{
+		Module.GameModel = MakeShared< FKeshSweeperGameModel >();
+		Module.GameView = MakeShared< FKeshSweeperGameView >();
+		Module.GameController = MakeShared< FKeshSweeperGameController >();
+
+		Module.GameModel->Init();
+		Module.GameView->Init();
+		Module.GameController->Init();
+	}
+
+	Module.GameController->OnToolbarButtonClick();
+}
+
+bool FKeshSweeperEditorModule::CanClickToolbarButton()
+{
+	return true;
+}
 
 void FKeshSweeperEditorModule::StartupModule()
 {
-	FKeshSweeperEditorModule::Plugin = MakeShareable( this );
-
 	// Register slate style overrides
 	FKeshSweeperStyle::Initialize();
 
@@ -24,8 +56,6 @@ void FKeshSweeperEditorModule::StartupModule()
 
 void FKeshSweeperEditorModule::ShutdownModule()
 {
-	FKeshSweeperEditorModule::Plugin.Reset();
-
 	FKeshSweeperStyle::Shutdown();
 	FKeshSweeperCommands::Unregister();
 
@@ -37,29 +67,6 @@ void FKeshSweeperEditorModule::ShutdownModule()
 
 	if ( GameModel.IsValid() )
 		GameModel->Destruct();	
-}
-
-void FKeshSweeperEditorModule::OnToolbarButtonClicked()
-{
-	// Only instantiate these when we need them. 
-	// Avoids wasting resources and creating tickable objects.
-	if ( !GameController.IsValid() )
-	{
-		GameModel = MakeShareable( new FKeshSweeperGameModel( Plugin ) );
-		GameView = MakeShareable( new FKeshSweeperGameView( Plugin ) );
-		GameController = MakeShareable( new FKeshSweeperGameController( Plugin ) );
-
-		GameModel->Init();
-		GameView->Init();
-		GameController->Init();
-	}
-
-	GameController->OnToolbarButtonClick();
-}
-
-bool FKeshSweeperEditorModule::CanClickToolbarButton()
-{
-	return true;
 }
 
 #undef LOCTEXT_NAMESPACE

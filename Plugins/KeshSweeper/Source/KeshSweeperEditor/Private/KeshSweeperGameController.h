@@ -3,7 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "KeshSweeperGameModel.h"
+#include "TickableEditorObject.h"
+#include "Containers/Queue.h"
+
+class FKeshSweeperEditorModule;
+struct FCellLocation;
 
 // Avoid namespace pollution
 namespace EGameStatus
@@ -25,12 +29,12 @@ public:
 
 	static uint16 GetMineCountForDifficulty( uint16 CellCount, float Difficulty );
 
-	FKeshSweeperGameController( TSharedPtr< class FKeshSweeperEditorModule > InPlugin );
+	FKeshSweeperGameController();
 
 	void Init();
 	void Destruct();
 
-	TSharedPtr< class FKeshSweeperEditorModule > GetPlugin() { return Plugin; };
+	TSharedPtr< FKeshSweeperEditorModule > GetPlugin();
 	EGameStatus::Enum GetGameStatus() const { return GameStatus; }
 
 	void OnToolbarButtonClick();
@@ -54,7 +58,6 @@ protected:
 
 	static TArray< bool > GenerateRandomMinePlacements( uint16 GridSize, uint16 Count );
 
-	TSharedPtr< class FKeshSweeperEditorModule > Plugin;
 	EGameStatus::Enum GameStatus;
 	TQueue< FCellLocation > CellsToReveal;
 	float TimeSinceAsyncCall;

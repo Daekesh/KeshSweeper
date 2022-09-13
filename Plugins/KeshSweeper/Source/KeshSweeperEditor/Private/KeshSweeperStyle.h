@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 
+class FSlateStyleSet;
+
 class FKeshSweeperStyle
 {
 
@@ -11,11 +13,11 @@ public:
 
 	static void Initialize();
 	static void Shutdown();
-	static TSharedPtr< class FSlateStyleSet > Get();
+	static TSharedPtr< FSlateStyleSet > Get();
 	static FName GetStyleSetName();
 
 private:
 
-	static TSharedPtr< class FSlateStyleSet > StyleSet;
+	static TSharedPtr< FSlateStyleSet > StyleSet;
 
 };

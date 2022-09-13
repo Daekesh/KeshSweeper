@@ -3,36 +3,41 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Modules/ModuleManager.h"
+#include "Modules/ModuleInterface.h"
+#include "Templates/SharedPointer.h"
 
 #define DEFAULT_MINEFIELD_WIDTH 20
 #define DEFAULT_MINEFIELD_HEIGHT 20
 #define DEFAULT_MINEFIELD_DIFFICULTY 4.f
 
-class FKeshSweeperEditorModule : public IModuleInterface
+class FKeshSweeperGameModel;
+class FKeshSweeperGameView;
+class FKeshSweeperGameController;
+
+class FKeshSweeperEditorModule : public IModuleInterface, public TSharedFromThis< FKeshSweeperEditorModule >
 {
-
-protected:
-
-	TSharedPtr< class FKeshSweeperGameModel > GameModel;
-	TSharedPtr< class FKeshSweeperGameView > GameView;
-	TSharedPtr< class FKeshSweeperGameController > GameController;
 
 public:
 
-	// I feel this is a bit hacky, but meh!
-	static TSharedPtr< FKeshSweeperEditorModule > Plugin;
+	static FKeshSweeperEditorModule& Get();
+	static FKeshSweeperEditorModule* GetPtr();
+
+	// Handle the commands
+	static void OnToolbarButtonClicked();
+	static bool CanClickToolbarButton();
 
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
-	// Handle the commands
-	void OnToolbarButtonClicked();
-	bool CanClickToolbarButton();
+	TSharedPtr< FKeshSweeperGameModel > GetModel() const { return GameModel; };
+	TSharedPtr< FKeshSweeperGameView > GetView() const { return GameView; };
+	TSharedPtr< FKeshSweeperGameController > GetController() const { return GameController; };
 
-	TSharedPtr< class FKeshSweeperGameModel > GetModel() const { return GameModel; };
-	TSharedPtr< class FKeshSweeperGameView > GetView() const { return GameView; };
-	TSharedPtr< class FKeshSweeperGameController > GetController() const { return GameController; };
+protected:
+
+	TSharedPtr< FKeshSweeperGameModel > GameModel;
+	TSharedPtr< FKeshSweeperGameView > GameView;
+	TSharedPtr< FKeshSweeperGameController > GameController;
 
 };

@@ -4,19 +4,23 @@
 
 #include "KeshSweeperGameView.h"
 #include "KeshSweeperEditorModule.h"
+#include "KeshSweeperGameController.h"
 #include "KeshSweeperGameModel.h"
+#include "KeshSweeperMinefieldCell.h"
 #include "KeshSweeperStyle.h"
 #include "KeshSweeperTab.h"
-#include "KeshSweeperMinefieldCell.h"
+#include "Widgets/Input/SButton.h"
+#include "Widgets/Input/SSlider.h"
+#include "Widgets/Input/SSpinBox.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/SCanvas.h"
 
 #define LOCTEXT_NAMESPACE "FKeshSweeperEditorModule"
 
 const float FKeshSweeperGameView::CellSize = 32.f;
 
-FKeshSweeperGameView::FKeshSweeperGameView( TSharedPtr< class FKeshSweeperEditorModule > InPlugin )
+FKeshSweeperGameView::FKeshSweeperGameView()
 {
-	Plugin = InPlugin;
-
 	// Default slider values
 	NewMinefieldWidth = 1;
 	NewMinefieldHeight = 1;
@@ -40,12 +44,24 @@ void FKeshSweeperGameView::Destruct()
 {
 	TSharedRef< FGlobalTabmanager > TabManager = FGlobalTabmanager::Get();
 	TabManager->UnregisterTabSpawner( SKeshSweeperTab::TabName );
+
+	if ( Tab.IsValid() )
+	{
+		Tab->RequestCloseTab();
+	}
 }
 
 TSharedRef<SDockTab> FKeshSweeperGameView::CreateTab( const FSpawnTabArgs& TabSpawnArgs )
 {
+	FKeshSweeperEditorModule* SharedModule = FKeshSweeperEditorModule::GetPtr();
+
+	if ( !SharedModule )
+	{
+		return SNew( SDockTab );
+	}
+
 	// Create the tab layout
-	TSharedRef< SKeshSweeperTab > NewTab = SNew( SKeshSweeperTab ).View( Plugin->GetView() ); // Avoid making a new shared ptr.
+	TSharedRef< SKeshSweeperTab > NewTab = SNew( SKeshSweeperTab ).View( SharedModule->GetView() ); // Avoid making a new shared ptr.
 
 	if ( NewTab->GetStartNewGameButton().IsValid() )
 		NewTab->GetStartNewGameButton()->SetOnClicked( FOnClicked::CreateSP( this, &FKeshSweeperGameView::OnNewGameButtonClicked ) );
@@ -135,23 +151,27 @@ void FKeshSweeperGameView::OnNewMinefieldDifficultySliderValueChanged( float New
 
 FReply FKeshSweeperGameView::OnNewGameButtonClicked()
 {
-	if ( !Plugin.IsValid() )
+	FKeshSweeperEditorModule* KeshSweeperModule = FKeshSweeperEditorModule::GetPtr();
+
+	if ( !KeshSweeperModule )
 		return FReply::Handled();
 
-	if ( !Plugin->GetController().IsValid() )
+	if ( !KeshSweeperModule->GetController().IsValid() )
 		return FReply::Handled();
 
-	Plugin->GetController()->StartNewGame( NewMinefieldWidth, NewMinefieldHeight, NewMinefieldDifficulty );
+	KeshSweeperModule->GetController()->StartNewGame( NewMinefieldWidth, NewMinefieldHeight, NewMinefieldDifficulty );
 	
 	return FReply::Handled();
 }
 
 bool FKeshSweeperGameView::PopulateMinefield()
 {
-	if ( !Plugin.IsValid() )
+	FKeshSweeperEditorModule* KeshSweeperModule = FKeshSweeperEditorModule::GetPtr();
+
+	if ( !KeshSweeperModule )
 		return false;
 
-	if ( !Plugin->GetModel().IsValid() )
+	if ( !KeshSweeperModule->GetModel().IsValid() )
 		return false;
 
 	if ( !Tab.IsValid() )
@@ -163,21 +183,21 @@ bool FKeshSweeperGameView::PopulateMinefield()
 	if ( !Tab->GetMinefield().IsValid() )
 		return false;
 
-	Tab->GetMinefieldContainer()->SetWidthOverride( Plugin->GetModel()->GetMinefieldWidth() * FKeshSweeperGameView::CellSize );
-	Tab->GetMinefieldContainer()->SetHeightOverride( Plugin->GetModel()->GetMinefieldHeight() * FKeshSweeperGameView::CellSize );
+	Tab->GetMinefieldContainer()->SetWidthOverride( KeshSweeperModule->GetModel()->GetMinefieldWidth() * FKeshSweeperGameView::CellSize );
+	Tab->GetMinefieldContainer()->SetHeightOverride( KeshSweeperModule->GetModel()->GetMinefieldHeight() * FKeshSweeperGameView::CellSize );
 
 	Tab->GetMinefield()->ClearChildren();
 	
-	for ( uint8 HeightIndex = 0; HeightIndex < Plugin->GetModel()->GetMinefieldHeight(); ++HeightIndex )
+	for ( uint8 HeightIndex = 0; HeightIndex < KeshSweeperModule->GetModel()->GetMinefieldHeight(); ++HeightIndex )
 	{
-		for ( uint8 WidthIndex = 0; WidthIndex < Plugin->GetModel()->GetMinefieldWidth(); ++WidthIndex )
+		for ( uint8 WidthIndex = 0; WidthIndex < KeshSweeperModule->GetModel()->GetMinefieldWidth(); ++WidthIndex )
 		{
 			Tab->GetMinefield()->AddSlot()
 				.Position( FVector2D( WidthIndex * FKeshSweeperGameView::CellSize, HeightIndex * FKeshSweeperGameView::CellSize ) )
 				.Size( FVector2D( FKeshSweeperGameView::CellSize, FKeshSweeperGameView::CellSize ) )
 				[
 					SNew( SKeshSweeperMinefieldCell )
-						.Model( Plugin->GetModel() )
+						.Model( KeshSweeperModule->GetModel() )
 						.Loc( { WidthIndex, HeightIndex } )
 				];
 		}
@@ -191,7 +211,7 @@ bool FKeshSweeperGameView::PopulateMinefield()
 
 FCellLocation FKeshSweeperGameView::MouseEventToCellLocation( const FGeometry& Geometry, const FPointerEvent& Event )
 {
-	FVector2D MouseLocationOnWidget = Event.GetScreenSpacePosition() - Geometry.AbsolutePosition;
+	FVector2D MouseLocationOnWidget = Event.GetScreenSpacePosition() - Geometry.GetAbsolutePosition();
 	
 	// Unscale position so it is on the same scale as the base "CellSize"
 	MouseLocationOnWidget /= Geometry.Scale; 
@@ -257,23 +277,25 @@ FReply FKeshSweeperGameView::OnMinefieldMouseButtonUp( const FGeometry& Geometry
 
 void FKeshSweeperGameView::OnMinefieldClicked( FKey MouseButton, const FCellLocation& Cell )
 {
-	if ( !Plugin.IsValid() )
+	FKeshSweeperEditorModule* KeshSweeperModule = FKeshSweeperEditorModule::GetPtr();
+
+	if ( !KeshSweeperModule )
 		return;
 
-	if ( !Plugin->GetModel().IsValid() )
+	if ( !KeshSweeperModule->GetModel().IsValid() )
 		return;
 
-	if ( !Plugin->GetModel()->IsValidLocation( Cell ) )
+	if ( !KeshSweeperModule->GetModel()->IsValidLocation( Cell ) )
 		return;
 
-	if ( !Plugin->GetController().IsValid() )
+	if ( !KeshSweeperModule->GetController().IsValid() )
 		return;
 	
 	if ( MouseButton == EKeys::LeftMouseButton )
-		Plugin->GetController()->RevealCell( Cell );
+		KeshSweeperModule->GetController()->RevealCell( Cell );
 
 	else if ( MouseButton == EKeys::RightMouseButton )
-		Plugin->GetController()->SuspectCell( Cell );
+		KeshSweeperModule->GetController()->SuspectCell( Cell );
 }
 
 void FKeshSweeperGameView::UpdateMinefieldDisplay()
@@ -300,13 +322,15 @@ void FKeshSweeperGameView::UpdateMinefieldDisplay()
 
 void FKeshSweeperGameView::UpdateCellDisplay( const FCellLocation& Loc )
 {
-	if ( !Plugin.IsValid() )
+	FKeshSweeperEditorModule* KeshSweeperModule = FKeshSweeperEditorModule::GetPtr();
+
+	if ( !KeshSweeperModule )
 		return;
 
-	if ( !Plugin->GetModel().IsValid() )
+	if ( !KeshSweeperModule->GetModel().IsValid() )
 		return;
 
-	if ( !Plugin->GetModel()->IsValidLocation( Loc ) )
+	if ( !KeshSweeperModule->GetModel()->IsValidLocation( Loc ) )
 		return;
 
 	if ( !Tab.IsValid() )
@@ -315,7 +339,7 @@ void FKeshSweeperGameView::UpdateCellDisplay( const FCellLocation& Loc )
 	if ( !Tab->GetMinefield().IsValid() )
 		return;
 
-	int Index = Plugin->GetModel()->XYToIndex( Loc );
+	int Index = KeshSweeperModule->GetModel()->XYToIndex( Loc );
 
 	// Get the grid cells
 	FChildren* Cells = Tab->GetMinefield()->GetChildren();

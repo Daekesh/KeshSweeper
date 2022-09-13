@@ -4,11 +4,10 @@
 
 #include "KeshSweeperGameController.h"
 #include "KeshSweeperEditorModule.h"
+#include "KeshSweeperGameView.h"
 
-FKeshSweeperGameController::FKeshSweeperGameController( TSharedPtr< class FKeshSweeperEditorModule > InPlugin )
+FKeshSweeperGameController::FKeshSweeperGameController()
 {
-	Plugin = InPlugin;
-
 	GameStatus = EGameStatus::NotStarted;
 	CellsToReveal.Empty();
 	TimeSinceAsyncCall = 0.f;
@@ -16,19 +15,21 @@ FKeshSweeperGameController::FKeshSweeperGameController( TSharedPtr< class FKeshS
 
 void FKeshSweeperGameController::Init()
 {
-	if ( !Plugin.IsValid() )
+	FKeshSweeperEditorModule* KeshSweeperModule = FKeshSweeperEditorModule::GetPtr();
+
+	if ( !KeshSweeperModule )
 	{
 		TriggerError();
 		return;
 	}
 
-	if ( !Plugin->GetModel().IsValid() )
+	if ( !KeshSweeperModule->GetModel().IsValid() )
 	{
 		TriggerError();
 		return;
 	}
 
-	if ( !Plugin->GetView().IsValid() )
+	if ( !KeshSweeperModule->GetView().IsValid() )
 	{
 		TriggerError();
 		return;
@@ -42,29 +43,31 @@ void FKeshSweeperGameController::Destruct()
 
 void FKeshSweeperGameController::OnToolbarButtonClick()
 {
-	if ( !Plugin.IsValid() )
+	FKeshSweeperEditorModule* KeshSweeperModule = FKeshSweeperEditorModule::GetPtr();
+
+	if ( !KeshSweeperModule )
 		return;
 
-	if ( !Plugin->GetModel().IsValid() )
+	if ( !KeshSweeperModule->GetModel().IsValid() )
 		return;
 
-	if ( !Plugin->GetView().IsValid() )
+	if ( !KeshSweeperModule->GetView().IsValid() )
 		return;
 
 	if ( GameStatus == EGameStatus::NotStarted )
 	{
-		Plugin->GetView()->SetNewMinefieldWidth( DEFAULT_MINEFIELD_WIDTH );
-		Plugin->GetView()->SetNewMinefieldHeight( DEFAULT_MINEFIELD_HEIGHT );
-		Plugin->GetView()->SetNewMinefieldDifficulty( DEFAULT_MINEFIELD_DIFFICULTY );
+		KeshSweeperModule->GetView()->SetNewMinefieldWidth( DEFAULT_MINEFIELD_WIDTH );
+		KeshSweeperModule->GetView()->SetNewMinefieldHeight( DEFAULT_MINEFIELD_HEIGHT );
+		KeshSweeperModule->GetView()->SetNewMinefieldDifficulty( DEFAULT_MINEFIELD_DIFFICULTY );
 
 		StartNewGame( 
-			Plugin->GetView()->GetNewMinefieldWidth(),  
-			Plugin->GetView()->GetNewMinefieldHeight(),
-			Plugin->GetView()->GetNewMinefieldDifficulty()
+			KeshSweeperModule->GetView()->GetNewMinefieldWidth(),  
+			KeshSweeperModule->GetView()->GetNewMinefieldHeight(),
+			KeshSweeperModule->GetView()->GetNewMinefieldDifficulty()
 		);
 	}
 
-	Plugin->GetView()->ShowTab();
+	KeshSweeperModule->GetView()->ShowTab();
 }
 
 bool FKeshSweeperGameController::StartNewGame( uint8 Width, uint8 Height, float Difficulty )
@@ -72,13 +75,15 @@ bool FKeshSweeperGameController::StartNewGame( uint8 Width, uint8 Height, float 
 	if ( GameStatus == EGameStatus::Error )
 		return false;
 
-	if ( !Plugin.IsValid() )
+	FKeshSweeperEditorModule* KeshSweeperModule = FKeshSweeperEditorModule::GetPtr();
+
+	if ( !KeshSweeperModule )
 		return false;
 
-	if ( !Plugin->GetModel().IsValid() )
+	if ( !KeshSweeperModule->GetModel().IsValid() )
 		return false;
 
-	if ( !Plugin->GetView().IsValid() )
+	if ( !KeshSweeperModule->GetView().IsValid() )
 		return false;
 
 	TArray< bool > Mines = GenerateRandomMinePlacements( 
@@ -87,13 +92,13 @@ bool FKeshSweeperGameController::StartNewGame( uint8 Width, uint8 Height, float 
 	);
 	
 	CellsToReveal.Empty();
-	Plugin->GetModel()->InitMinefield( Width, Height, Mines );
-	Plugin->GetView()->PopulateMinefield();
+	KeshSweeperModule->GetModel()->InitMinefield( Width, Height, Mines );
+	KeshSweeperModule->GetView()->PopulateMinefield();
 	GameStatus = EGameStatus::InProgress;
 
 	// Automatic win? Woo!
-	if ( Plugin->GetModel()->GetMineCount() == 0 || 
-		 Plugin->GetModel()->GetMineCount() >= Plugin->GetModel()->GetMinefieldSize() )
+	if ( KeshSweeperModule->GetModel()->GetMineCount() == 0 || 
+		 KeshSweeperModule->GetModel()->GetMineCount() >= KeshSweeperModule->GetModel()->GetMinefieldSize() )
 	{
 		TriggerGameEnd( EGameStatus::Won );
 	}
@@ -109,39 +114,41 @@ void FKeshSweeperGameController::SuspectCell( const FCellLocation& Loc )
 	if ( IsRevealingCells() )
 		return;
 
-	if ( !Plugin.IsValid() )
+	FKeshSweeperEditorModule* KeshSweeperModule = FKeshSweeperEditorModule::GetPtr();
+
+	if ( !KeshSweeperModule )
 	{
 		TriggerError();
 		return;
 	}
 
-	if ( !Plugin->GetModel().IsValid() )
+	if ( !KeshSweeperModule->GetModel().IsValid() )
 	{
 		TriggerError();
 		return;
 	}
 
-	if ( !Plugin->GetView().IsValid() )
+	if ( !KeshSweeperModule->GetView().IsValid() )
 	{
 		TriggerError();
 		return;
 	}
 
-	if ( !Plugin->GetModel()->IsValidLocation( Loc ) )
+	if ( !KeshSweeperModule->GetModel()->IsValidLocation( Loc ) )
 		return;
 
-	const FCellInfo& CellInfo = Plugin->GetModel()->GetCellInfo( Loc );
+	const FCellInfo& CellInfo = KeshSweeperModule->GetModel()->GetCellInfo( Loc );
 	
 	switch ( CellInfo.Status )
 	{
 		case ECellStatus::Hidden:
-			if ( Plugin->GetModel()->SuspectCell( Loc ) )
-				Plugin->GetView()->UpdateCellDisplay( Loc );
+			if ( KeshSweeperModule->GetModel()->SuspectCell( Loc ) )
+				KeshSweeperModule->GetView()->UpdateCellDisplay( Loc );
 			break;
 
 		case ECellStatus::Suspected:
-			if ( Plugin->GetModel()->UnsuspectCell( Loc ) )
-				Plugin->GetView()->UpdateCellDisplay( Loc );
+			if ( KeshSweeperModule->GetModel()->UnsuspectCell( Loc ) )
+				KeshSweeperModule->GetView()->UpdateCellDisplay( Loc );
 			break;
 	}
 }
@@ -154,32 +161,34 @@ void FKeshSweeperGameController::RevealCell( const FCellLocation& Loc )
 	if ( IsRevealingCells() )
 		return;
 
-	if ( !Plugin.IsValid() )
+	FKeshSweeperEditorModule* KeshSweeperModule = FKeshSweeperEditorModule::GetPtr();
+
+	if ( !KeshSweeperModule )
 	{
 		TriggerError();
 		return;
 	}
 
-	if ( !Plugin->GetModel().IsValid() )
+	if ( !KeshSweeperModule->GetModel().IsValid() )
 	{
 		TriggerError();
 		return;
 	}
 
-	if ( !Plugin->GetView().IsValid() )
+	if ( !KeshSweeperModule->GetView().IsValid() )
 	{
 		TriggerError();
 		return;
 	}
 
-	if ( !Plugin->GetModel()->IsValidLocation( Loc ) )
+	if ( !KeshSweeperModule->GetModel()->IsValidLocation( Loc ) )
 		return;
 
-	const FCellInfo& CellInfo = Plugin->GetModel()->GetCellInfo( Loc );
+	const FCellInfo& CellInfo = KeshSweeperModule->GetModel()->GetCellInfo( Loc );
 
 	if ( CellInfo.bIsMine )
 	{
-		Plugin->GetModel()->ExplodeCell( Loc );
+		KeshSweeperModule->GetModel()->ExplodeCell( Loc );
 		TriggerGameEnd( EGameStatus::Lost );
 		return;
 	}
@@ -190,48 +199,50 @@ void FKeshSweeperGameController::RevealCell( const FCellLocation& Loc )
 
 void FKeshSweeperGameController::AsyncReveal( const FCellLocation& Loc )
 {
-	if ( !Plugin.IsValid() )
+	FKeshSweeperEditorModule* KeshSweeperModule = FKeshSweeperEditorModule::GetPtr();
+
+	if ( !KeshSweeperModule )
 	{
 		TriggerError();
 		return;
 	}
 
-	if ( !Plugin->GetModel().IsValid() )
+	if ( !KeshSweeperModule->GetModel().IsValid() )
 	{
 		TriggerError();
 		return;
 	}
 
-	if ( !Plugin->GetView().IsValid() )
+	if ( !KeshSweeperModule->GetView().IsValid() )
 	{
 		TriggerError();
 		return;
 	}
 
-	if ( !Plugin->GetModel()->IsValidLocation( Loc ) )
+	if ( !KeshSweeperModule->GetModel()->IsValidLocation( Loc ) )
 		return;
 
-	const FCellInfo& CellInfo = Plugin->GetModel()->GetCellInfo( Loc );
+	const FCellInfo& CellInfo = KeshSweeperModule->GetModel()->GetCellInfo( Loc );
 
 	if ( CellInfo.bIsMine )
 		return;
 
 	// Did something go wrong revealing the cell? Like it's already revealed?
-	if ( !Plugin->GetModel()->RevealCell( Loc ) )
+	if ( !KeshSweeperModule->GetModel()->RevealCell( Loc ) )
 		return;
 	
 	// Update the cell's graphics
-	Plugin->GetView()->UpdateCellDisplay( Loc );
+	KeshSweeperModule->GetView()->UpdateCellDisplay( Loc );
 
 	// Won? Woo!
-	if ( ( Plugin->GetModel()->GetMineCount() + Plugin->GetModel()->GetNumberOfCellsRevealed() ) >= Plugin->GetModel()->GetMinefieldSize() )
+	if ( ( KeshSweeperModule->GetModel()->GetMineCount() + KeshSweeperModule->GetModel()->GetNumberOfCellsRevealed() ) >= KeshSweeperModule->GetModel()->GetMinefieldSize() )
 	{
 		TriggerGameEnd( EGameStatus::Won );
 		return;
 	}
 
 	// Don't reveal other cells if we have nearby mines!
-	if ( Plugin->GetModel()->GetNearbyMineCount( Loc ) > 0 )
+	if ( KeshSweeperModule->GetModel()->GetNearbyMineCount( Loc ) > 0 )
 		return;
 
 	// Add new cells to the reveal queue
@@ -254,7 +265,7 @@ void FKeshSweeperGameController::AsyncReveal( const FCellLocation& Loc )
 	}
 
 	// Bottom
-	if ( Loc.Y < ( Plugin->GetModel()->GetMinefieldHeight() - 1 ) )
+	if ( Loc.Y < ( KeshSweeperModule->GetModel()->GetMinefieldHeight() - 1 ) )
 	{
 		Temp = Loc;
 		Temp.Y += 1;
@@ -262,7 +273,7 @@ void FKeshSweeperGameController::AsyncReveal( const FCellLocation& Loc )
 	}
 
 	// Right
-	if ( Loc.X < ( Plugin->GetModel()->GetMinefieldWidth() - 1 ) )
+	if ( Loc.X < ( KeshSweeperModule->GetModel()->GetMinefieldWidth() - 1 ) )
 	{
 		Temp = Loc;
 		Temp.X += 1;
@@ -279,7 +290,7 @@ void FKeshSweeperGameController::AsyncReveal( const FCellLocation& Loc )
 	}
 
 	// Top right
-	if ( Loc.X < ( Plugin->GetModel()->GetMinefieldWidth() - 1 ) && Loc.Y > 0 )
+	if ( Loc.X < ( KeshSweeperModule->GetModel()->GetMinefieldWidth() - 1 ) && Loc.Y > 0 )
 	{
 		Temp = Loc;
 		Temp.X += 1;
@@ -288,7 +299,7 @@ void FKeshSweeperGameController::AsyncReveal( const FCellLocation& Loc )
 	}
 
 	// Bottom left
-	if ( Loc.X > 0 && Loc.Y < ( Plugin->GetModel()->GetMinefieldHeight() - 1 ) )
+	if ( Loc.X > 0 && Loc.Y < ( KeshSweeperModule->GetModel()->GetMinefieldHeight() - 1 ) )
 	{
 		Temp = Loc;
 		Temp.X -= 1;
@@ -297,7 +308,7 @@ void FKeshSweeperGameController::AsyncReveal( const FCellLocation& Loc )
 	}
 
 	// Bottom right
-	if ( Loc.X < ( Plugin->GetModel()->GetMinefieldWidth() - 1 ) && Loc.Y < ( Plugin->GetModel()->GetMinefieldHeight() - 1 ) )
+	if ( Loc.X < ( KeshSweeperModule->GetModel()->GetMinefieldWidth() - 1 ) && Loc.Y < ( KeshSweeperModule->GetModel()->GetMinefieldHeight() - 1 ) )
 	{
 		Temp = Loc;
 		Temp.X += 1;
@@ -315,27 +326,29 @@ void FKeshSweeperGameController::TriggerGameEnd( EGameStatus::Enum NewStatus )
 
 	CellsToReveal.Empty();
 
-	if ( !Plugin.IsValid() )
+	FKeshSweeperEditorModule* KeshSweeperModule = FKeshSweeperEditorModule::GetPtr();
+
+	if ( !KeshSweeperModule )
 	{
 		TriggerError();
 		return;
 	}
 
-	if ( !Plugin->GetModel().IsValid() )
+	if ( !KeshSweeperModule->GetModel().IsValid() )
 	{
 		TriggerError();
 		return;
 	}
 
-	if ( !Plugin->GetView().IsValid() )
+	if ( !KeshSweeperModule->GetView().IsValid() )
 	{
 		TriggerError();
 		return;
 	}
 
-	Plugin->GetModel()->RevealMinefield();
+	KeshSweeperModule->GetModel()->RevealMinefield();
 	GameStatus = NewStatus;
-	Plugin->GetView()->UpdateMinefieldDisplay();
+	KeshSweeperModule->GetView()->UpdateMinefieldDisplay();
 }
 
 void FKeshSweeperGameController::TriggerError()
@@ -351,11 +364,13 @@ TStatId FKeshSweeperGameController::GetStatId() const
 
 void FKeshSweeperGameController::Tick( float DeltaTime )
 {
-	if ( Plugin.IsValid() )
+	FKeshSweeperEditorModule* KeshSweeperModule = FKeshSweeperEditorModule::GetPtr();
+
+	if ( KeshSweeperModule )
 	{
-		if ( Plugin->GetView().IsValid() )
+		if ( KeshSweeperModule->GetView().IsValid() )
 		{
-			Plugin->GetView()->TickUI();
+			KeshSweeperModule->GetView()->TickUI();
 		}
 	}
 

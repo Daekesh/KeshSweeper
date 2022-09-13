@@ -7,10 +7,8 @@
 
 const FCellInfo FKeshSweeperGameModel::DefaultCellInfo = { false, ECellStatus::Hidden };
 
-FKeshSweeperGameModel::FKeshSweeperGameModel( TSharedPtr< class FKeshSweeperEditorModule > InPlugin )
+FKeshSweeperGameModel::FKeshSweeperGameModel()
 {
-	Plugin = InPlugin;
-
 	Minefield.SetNum( 0 );
 	MinefieldWidth = 0;
 	MinefieldHeight = 0;

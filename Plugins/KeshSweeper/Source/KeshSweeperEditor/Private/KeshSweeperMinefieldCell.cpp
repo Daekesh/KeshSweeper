@@ -4,6 +4,11 @@
 #include "KeshSweeperGameModel.h"
 #include "KeshSweeperGameView.h"
 #include "KeshSweeperStyle.h"
+#include "Styling/SlateStyle.h"
+#include "Widgets/Colors/SColorBlock.h"
+#include "Widgets/Images/SImage.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "FKeshSweeperEditorModule"
 
@@ -32,7 +37,7 @@ void SKeshSweeperMinefieldCell::Construct( const FArguments& InArgs )
 	Model = InArgs._Model;
 	Loc   = InArgs._Loc;
 
-	TSharedPtr< class FSlateStyleSet > StyleSet = FKeshSweeperStyle::Get();
+	TSharedPtr< FSlateStyleSet > StyleSet = FKeshSweeperStyle::Get();
 
 	if ( !StyleSet.IsValid() ) { return; }
 
@@ -134,6 +139,8 @@ void SKeshSweeperMinefieldCell::UpdateDisplay() const
 			break;
 	}
 
+#undef VisibilityMacro
+
 	if ( CellInfo.Status == ECellStatus::Revealed && !CellInfo.bIsMine )
 	{
 		uint16 NearbyMineCount = Model->GetNearbyMineCount( Loc );
@@ -147,11 +154,9 @@ void SKeshSweeperMinefieldCell::UpdateDisplay() const
 		{
 			NearbyMines->SetText( FText::FromString( FString::FromInt( NearbyMineCount ) ) );
 
-			NearbyMines->SetColorAndOpacity(
-					StyleSet->GetColor(
-							FName( "KeshSweeperStyle.NearbyMineTextColour." + FString::FromInt( NearbyMineCount ) )
-						)
-				);
+			NearbyMines->SetColorAndOpacity( StyleSet->GetColor(
+					FName( "KeshSweeperStyle.NearbyMineTextColour." + FString::FromInt( NearbyMineCount ) )
+				) );
 
 			NearbyMines->SetVisibility( EVisibility::Visible );
 		}
