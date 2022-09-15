@@ -27,7 +27,8 @@ public class KeshSweeperEditor : ModuleRules
 				"InputCore",
 				"SlateCore",
 				"LevelEditor",
-				"EditorStyle"
+				"EditorStyle",
+				"ToolMenus"
 			}
 		);
 	}

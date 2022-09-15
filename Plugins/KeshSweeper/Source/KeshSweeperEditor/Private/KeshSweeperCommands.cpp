@@ -41,24 +41,19 @@ void FKeshSweeperCommands::RegisterCommands()
 			FCanExecuteAction::CreateStatic( &FKeshSweeperEditorModule::CanClickToolbarButton )
 		);
 
-		struct Local
+		// Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
+		FToolMenuOwnerScoped OwnerScoped(this);
+
 		{
-			static void AddToolbarCommands( FToolBarBuilder& ToolbarBuilder )
+			UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar.PlayToolBar");
 			{
-				ToolbarBuilder.AddToolBarButton( FKeshSweeperCommands::Get().OpenWindow );
+				FToolMenuSection& Section = ToolbarMenu->FindOrAddSection("PluginTools");
+				{
+					FToolMenuEntry& Entry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(OpenWindow));
+					Entry.SetCommandList(CommandList);
+				}
 			}
-		};
-
-		TSharedRef< FExtender > ToolbarExtender( new FExtender() );
-
-		ToolbarExtender->AddToolBarExtension(
-			TEXT( "Game" ),
-			EExtensionHook::After,
-			CommandList.ToSharedRef(),
-			FToolBarExtensionDelegate::CreateStatic( &Local::AddToolbarCommands )
-		);
-
-		LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender( ToolbarExtender );
+		}
 	}
 	// Scope
 }
